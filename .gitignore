@@ -169,3 +169,33 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Node/React
+chat-app/node_modules/
+chat-app/.pnp
+chat-app/.pnp.js
+chat-app/coverage/
+chat-app/build/
+chat-app/.DS_Store
+chat-app/.env.local
+chat-app/.env.development.local
+chat-app/.env.test.local
+chat-app/.env.production.local
+chat-app/npm-debug.log*
+chat-app/yarn-debug.log*
+chat-app/yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

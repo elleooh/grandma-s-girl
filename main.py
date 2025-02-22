@@ -6,16 +6,18 @@ from elevenlabs.client import ElevenLabs
 from elevenlabs.conversational_ai.conversation import Conversation
 from elevenlabs.conversational_ai.default_audio_interface import DefaultAudioInterface
 from dotenv import load_dotenv
+from flask import Flask
+from flask_socketio import SocketIO
 
 # Load environment variables
 load_dotenv()
 
 # --- Set up credentials from environment variables ---
-agent_id = os.getenv("AGENT_ID")
-api_key = os.getenv("ELEVEN_API_KEY")
+AGENT_ID = os.getenv("AGENT_ID")
+ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 FAL_KEY = os.getenv("FAL_KEY")
 
-if not all([agent_id, api_key, FAL_KEY]):
+if not all([AGENT_ID, ELEVEN_API_KEY, FAL_KEY]):
     raise ValueError(
         "Missing required environment variables. Please check your .env file."
     )
@@ -23,32 +25,25 @@ if not all([agent_id, api_key, FAL_KEY]):
 os.environ["FAL_KEY"] = FAL_KEY  # Set FAL_KEY in environment
 
 # --- Initialize the ElevenLabs client ---
-client = ElevenLabs(api_key=api_key)
+client = ElevenLabs(api_key=ELEVEN_API_KEY)
 
 # This list will store all transcript fragments.
 transcript_log = []
 transcript_lock = threading.Lock()
 
+# Add after other initializations
+app = Flask(__name__)
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=["http://localhost:3000"],
+    logger=True,
+)
+
 
 # --- Define a condition to trigger image generation ---
 def should_generate_image(transcript):
+    # TODO: add logic to trigger image generation
     return True
-    # For demonstration, trigger if transcript has at least 20 words and contains any trigger keyword.
-    # trigger_keywords = [
-    #     "scene",
-    #     "scenario",
-    #     "view",
-    #     "landscape",
-    #     "image",
-    #     "picture",
-    #     "show",
-    # ]
-    # words = transcript.split()
-    # if len(words) >= 20 and any(
-    #     keyword in transcript.lower() for keyword in trigger_keywords
-    # ):
-    #     return True
-    # return False
 
 
 def on_queue_update(update):
@@ -78,8 +73,14 @@ def generate_image_from_transcript(prompt):
     try:
         print("Generating image...PLEASE WAIT")
         result = generate_image_fal(prompt)
-        image_url = result  # ["data"][0]["url"]
-        print("[Image Generation] Generated Image URL:", image_url)
+        images = result.get("images", [])
+        if images:
+            image_url = images[0].get("url")
+            print("[Image Generation] Generated Image URL:", image_url)
+            # Send to frontend
+            socketio.emit(
+                "image", {"type": "image", "text": prompt, "image_url": image_url}
+            )
     except Exception as e:
         print("[Image Generation] Error generating image:", e)
 
@@ -104,17 +105,27 @@ def handle_agent_response(response):
 # --- Initialize the conversation instance ---
 conversation = Conversation(
     client=client,
-    agent_id=agent_id,
-    requires_auth=bool(api_key),
+    agent_id=AGENT_ID,
+    requires_auth=bool(ELEVEN_API_KEY),
     audio_interface=DefaultAudioInterface(),
     callback_user_transcript=handle_user_transcript,
     callback_agent_response=handle_agent_response,
 )
 
-print("Starting conversation session...")
-conversation.start_session()
+# Modify the main block to run both conversation and web server
+if __name__ == "__main__":
+    # Start conversation in main thread
+    print("Starting conversation session...")
+    conversation.start_session()
 
-# This call will block until the conversation ends (e.g. with Ctrl+C)
-conversation_id = conversation.wait_for_session_end()
-print("Conversation Ended. Conversation ID:", conversation_id)
-print("Full Transcript Log:", transcript_log)
+    # Run Flask-SocketIO in a separate thread
+    server_thread = threading.Thread(
+        target=lambda: socketio.run(app, host="0.0.0.0", port=3001)
+    )
+    server_thread.daemon = True
+    server_thread.start()
+
+    # Block on conversation
+    conversation_id = conversation.wait_for_session_end()
+    print("Conversation Ended. Conversation ID:", conversation_id)
+    print("Full Transcript Log:", transcript_log)
