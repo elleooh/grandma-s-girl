@@ -37,6 +37,10 @@ socketio = SocketIO(
     app,
     cors_allowed_origins=["http://localhost:3000"],
     logger=True,
+    engineio_logger=True,
+    async_mode="threading",
+    ping_timeout=60,
+    ping_interval=25,
 )
 
 
@@ -55,6 +59,14 @@ def on_queue_update(update):
 # --- Dummy function to simulate FAL AI image generation ---
 def generate_image_fal(prompt):
     # In your production code, replace this with:
+    # return {
+    #     "images": [
+    #         {
+    #             "url": "https://v3.fal.media/files/zebra/3fVrwhS6WKCiqqX2WmxHh.png",
+    #             "text": prompt,
+    #         }
+    #     ]
+    # }
     result = fal_client.subscribe(
         "fal-ai/flux-pro/v1.1-ultra-finetuned",
         arguments={"prompt": prompt, "finetune_id": "", "finetune_strength": 0.5},
@@ -77,12 +89,19 @@ def generate_image_from_transcript(prompt):
         if images:
             image_url = images[0].get("url")
             print("[Image Generation] Generated Image URL:", image_url)
-            # Send to frontend
+            # Add more detailed logging
+            print("[WebSocket] Attempting to emit image event")
             socketio.emit(
-                "image", {"type": "image", "text": prompt, "image_url": image_url}
+                "image",
+                {"type": "image", "text": prompt, "image_url": image_url},
+                namespace="/",  # Explicitly specify namespace
             )
+            print("[WebSocket] Image event emitted successfully")
+        else:
+            print("[Image Generation] No images returned from FAL")
     except Exception as e:
-        print("[Image Generation] Error generating image:", e)
+        print("[Image Generation] Error generating image:", str(e))
+        print("Full error:", e)
 
 
 # --- Callback functions for the conversational agent ---
@@ -112,20 +131,43 @@ conversation = Conversation(
     callback_agent_response=handle_agent_response,
 )
 
-# Modify the main block to run both conversation and web server
+
+# Add this after your other socket event handlers
+@socketio.on("connect")
+def handle_connect():
+    print("[WebSocket] Client connected")
+    # Send a test image immediately on connection
+    test_image = {
+        "type": "image",
+        "text": "Test connection image",
+        "image_url": "https://picsum.photos/800/800",
+    }
+    print("[WebSocket] Sending test image on connection")
+    socketio.emit("image", test_image)
+
+
+# Modify the main block to properly handle both the conversation and web server
 if __name__ == "__main__":
-    # Start conversation in main thread
-    print("Starting conversation session...")
-    conversation.start_session()
+    print("Starting server on port 3001...")
 
-    # Run Flask-SocketIO in a separate thread
-    server_thread = threading.Thread(
-        target=lambda: socketio.run(app, host="0.0.0.0", port=3001)
+    def run_conversation():
+        print("Starting conversation session...")
+        conversation.start_session()
+        conversation_id = conversation.wait_for_session_end()
+        print("Conversation Ended. Conversation ID:", conversation_id)
+        print("Full Transcript Log:", transcript_log)
+
+    # Start conversation in a separate thread
+    conversation_thread = threading.Thread(target=run_conversation)
+    conversation_thread.daemon = True
+    conversation_thread.start()
+
+    # Run the SocketIO server in the main thread
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=3001,
+        debug=True,
+        use_reloader=False,  # Disable reloader when using threads
+        allow_unsafe_werkzeug=True,
     )
-    server_thread.daemon = True
-    server_thread.start()
-
-    # Block on conversation
-    conversation_id = conversation.wait_for_session_end()
-    print("Conversation Ended. Conversation ID:", conversation_id)
-    print("Full Transcript Log:", transcript_log)
