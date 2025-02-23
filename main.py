@@ -1,6 +1,6 @@
 import os
 import threading
-import time
+from datetime import datetime
 import fal_client
 import spacy
 from elevenlabs.client import ElevenLabs
@@ -49,13 +49,14 @@ socketio = SocketIO(
 )
 
 
-def respond_name(parameters):
-    message = parameters.get("transcript")
-    print(message)
+def get_current_datetime(parameters):
+    print("get_current_datetime called")
+    current_time = datetime.now()
+    return current_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
 client_tools = ClientTools()
-client_tools.register("respond_name", respond_name)
+client_tools.register("get_current_datetime", get_current_datetime)
 
 
 def on_queue_update(update):
@@ -75,27 +76,27 @@ def should_generate_image(transcript):
     nouns = _extract_pos(transcript)
     print("NOUNS: ", nouns)
     # If there are more than half of the words in the transcript that are nouns, generate an image
-    return len(nouns) > 3
+    return len(nouns) > 0
 
 
 # --- Dummy function to simulate FAL AI image generation ---
 def generate_image_fal(prompt):
     # In your production code, replace this with:
-    return {
-        "images": [
-            {
-                "url": "https://v3.fal.media/files/zebra/3fVrwhS6WKCiqqX2WmxHh.png",
-                "text": prompt,
-            }
-        ]
-    }
-    # result = fal_client.subscribe(
-    #     "fal-ai/flux-pro/v1.1-ultra-finetuned",
-    #     arguments={"prompt": prompt, "finetune_id": "", "finetune_strength": 0.5},
-    #     with_logs=True,
-    #     on_queue_update=on_queue_update,
-    # )
-    # return result
+    # return {
+    #     "images": [
+    #         {
+    #             "url": "https://v3.fal.media/files/zebra/3fVrwhS6WKCiqqX2WmxHh.png",
+    #             "text": prompt,
+    #         }
+    #     ]
+    # }
+    result = fal_client.subscribe(
+        "fal-ai/flux-pro/v1.1-ultra-finetuned",
+        arguments={"prompt": prompt, "finetune_id": "", "finetune_strength": 0.5},
+        with_logs=True,
+        on_queue_update=on_queue_update,
+    )
+    return result
 
 
 # --- Function to call FAL AI API and display the image ---
@@ -151,23 +152,20 @@ conversation = Conversation(
     callback_user_transcript=handle_user_transcript,
     callback_agent_response=handle_agent_response,
 )
-import pdb
-
-pdb.set_trace()
 
 
 # Add this after your other socket event handlers
-@socketio.on("connect")
-def handle_connect():
-    print("[WebSocket] Client connected")
-    # Send a test image immediately on connection
-    test_image = {
-        "type": "image",
-        "text": "Test connection image",
-        "image_url": "https://picsum.photos/800/800",
-    }
-    print("[WebSocket] Sending test image on connection")
-    socketio.emit("image", test_image)
+# @socketio.on("connect")
+# def handle_connect():
+#     print("[WebSocket] Client connected")
+#     # Send a test image immediately on connection
+#     test_image = {
+#         "type": "image",
+#         "text": "Test connection image",
+#         "image_url": "https://picsum.photos/800/800",
+#     }
+#     print("[WebSocket] Sending test image on connection")
+#     socketio.emit("image", test_image)
 
 
 # Modify the main block to properly handle both the conversation and web server
