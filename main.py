@@ -2,8 +2,9 @@ import os
 import threading
 import time
 import fal_client
+import spacy
 from elevenlabs.client import ElevenLabs
-from elevenlabs.conversational_ai.conversation import Conversation
+from elevenlabs.conversational_ai.conversation import Conversation, ClientTools
 from elevenlabs.conversational_ai.default_audio_interface import DefaultAudioInterface
 from dotenv import load_dotenv
 from flask import Flask
@@ -24,8 +25,12 @@ if not all([AGENT_ID, ELEVEN_API_KEY, FAL_KEY]):
 
 os.environ["FAL_KEY"] = FAL_KEY  # Set FAL_KEY in environment
 
+# --- Initialize the spacy model ---
+nlp = spacy.load("en_core_web_sm")
+
 # --- Initialize the ElevenLabs client ---
 client = ElevenLabs(api_key=ELEVEN_API_KEY)
+
 
 # This list will store all transcript fragments.
 transcript_log = []
@@ -44,10 +49,13 @@ socketio = SocketIO(
 )
 
 
-# --- Define a condition to trigger image generation ---
-def should_generate_image(transcript):
-    # TODO: add logic to trigger image generation
-    return True
+def respond_name(parameters):
+    message = parameters.get("transcript")
+    print(message)
+
+
+client_tools = ClientTools()
+client_tools.register("respond_name", respond_name)
 
 
 def on_queue_update(update):
@@ -56,26 +64,38 @@ def on_queue_update(update):
             print(log["message"])
 
 
+# --- Define a condition to trigger image generation ---
+def should_generate_image(transcript):
+    def _extract_pos(text):
+        # Extract nouns from the text, not just named entities
+        doc = nlp(text)
+        nouns = [token.text for token in doc if token.pos_ == "NOUN"]
+        return nouns
+
+    nouns = _extract_pos(transcript)
+    print("NOUNS: ", nouns)
+    # If there are more than half of the words in the transcript that are nouns, generate an image
+    return len(nouns) > 3
+
+
 # --- Dummy function to simulate FAL AI image generation ---
 def generate_image_fal(prompt):
     # In your production code, replace this with:
-    # return {
-    #     "images": [
-    #         {
-    #             "url": "https://v3.fal.media/files/zebra/3fVrwhS6WKCiqqX2WmxHh.png",
-    #             "text": prompt,
-    #         }
-    #     ]
-    # }
-    result = fal_client.subscribe(
-        "fal-ai/flux-pro/v1.1-ultra-finetuned",
-        arguments={"prompt": prompt, "finetune_id": "", "finetune_strength": 0.5},
-        with_logs=True,
-        on_queue_update=on_queue_update,
-    )
-    return result
-    # time.sleep(2)  # Simulate network delay
-    # return {"data": [{"url": "https://example.com/generated_image.png"}]}
+    return {
+        "images": [
+            {
+                "url": "https://v3.fal.media/files/zebra/3fVrwhS6WKCiqqX2WmxHh.png",
+                "text": prompt,
+            }
+        ]
+    }
+    # result = fal_client.subscribe(
+    #     "fal-ai/flux-pro/v1.1-ultra-finetuned",
+    #     arguments={"prompt": prompt, "finetune_id": "", "finetune_strength": 0.5},
+    #     with_logs=True,
+    #     on_queue_update=on_queue_update,
+    # )
+    # return result
 
 
 # --- Function to call FAL AI API and display the image ---
@@ -126,10 +146,14 @@ conversation = Conversation(
     client=client,
     agent_id=AGENT_ID,
     requires_auth=bool(ELEVEN_API_KEY),
+    client_tools=client_tools,
     audio_interface=DefaultAudioInterface(),
     callback_user_transcript=handle_user_transcript,
     callback_agent_response=handle_agent_response,
 )
+import pdb
+
+pdb.set_trace()
 
 
 # Add this after your other socket event handlers
