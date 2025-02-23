@@ -10,6 +10,7 @@ import {
     Grid,
     GridItem,
     HStack,
+    Spinner,
 } from '@chakra-ui/react';
 
 function App() {
@@ -84,83 +85,92 @@ function App() {
     }, [handleImageUpdate]);
 
     return (
-        <Container maxW="container.xl" h="100vh" display="flex" alignItems="center">
-            <VStack spacing={8} align="stretch" w="100%">
+        <Container maxW="100vw" h="100vh" display="flex" alignItems="center" p={0}>
+            <HStack spacing={8} align="stretch" w="100%" h="100vh" p={4}>
                 {/* Featured Image */}
-                {currentImage ? (
-                    <VStack spacing={0}>
-                        <Box width="800px" height="800px" mx="auto" position="relative">
-                            <Image
-                                src={currentImage.url}
-                                alt="Generated image"
-                                objectFit="contain"
-                                w="100%"
-                                h="100%"
-                                key={currentImage.url}
-                            />
-                            {lastPrompt && (
-                                <Box
-                                    position="absolute"
-                                    bottom="0"
-                                    left="0"
-                                    right="0"
-                                    bg="rgba(0, 0, 0, 0.6)"
-                                    p={4}
-                                    minH="fit-content"
-                                >
-                                    <Text
-                                        fontSize="xl"
-                                        color="white"
-                                        textAlign="center"
+                <Box flex="1" display="flex" justifyContent="center" alignItems="center">
+                    {currentImage ? (
+                        <VStack spacing={0}>
+                            <Box width="1200px" height="1200px" position="relative">
+                                <Image
+                                    src={currentImage.url}
+                                    alt="Generated image"
+                                    objectFit="contain"
+                                    w="100%"
+                                    h="100%"
+                                    key={currentImage.url}
+                                />
+                                {lastPrompt && (
+                                    <Box
+                                        position="absolute"
+                                        bottom="0"
+                                        left="0"
+                                        right="0"
+                                        bg="rgba(0, 0, 0, 0.6)"
+                                        p={8}
+                                        minH="fit-content"
                                     >
-                                        {lastPrompt}
-                                    </Text>
-                                </Box>
-                            )}
+                                        <Text
+                                            fontSize="3xl"
+                                            color="white"
+                                            textAlign="center"
+                                        >
+                                            {lastPrompt}
+                                        </Text>
+                                    </Box>
+                                )}
+                            </Box>
+                        </VStack>
+                    ) : (
+                        <Box p={4} textAlign="center">
+                            <Spinner
+                                thickness='4px'
+                                speed='0.65s'
+                                emptyColor='gray.200'
+                                color='blue.500'
+                                size='xl'
+                            />
                         </Box>
-                    </VStack>
-                ) : (
-                    <Box p={4} textAlign="center">
-                        Waiting for images...
-                    </Box>
-                )}
+                    )}
+                </Box>
 
-                {/* Horizontal Scrollable Gallery */}
+                {/* Vertical Scrollable Gallery */}
                 {imageHistory.length > 0 && (
                     <Box
-                        overflowX="auto"
+                        w="350px"
+                        h="100%"
+                        overflowY="auto"
                         css={{
                             '&::-webkit-scrollbar': {
-                                height: '8px',
+                                width: '12px',
                             },
                             '&::-webkit-scrollbar-track': {
                                 background: '#f1f1f1',
                             },
                             '&::-webkit-scrollbar-thumb': {
                                 background: '#888',
-                                borderRadius: '4px',
+                                borderRadius: '6px',
                             },
                             '&::-webkit-scrollbar-thumb:hover': {
                                 background: '#555',
                             },
                         }}
                     >
-                        <HStack spacing={4} p={2} minW="min-content">
+                        <VStack spacing={6} p={3}>
                             {imageHistory.map((image, index) => (
                                 <Box
                                     key={image.timestamp}
                                     cursor="pointer"
                                     onClick={() => handleHistoryImageClick(image)}
                                     position="relative"
-                                    flexShrink={0}
-                                    w="200px"
+                                    w="100%"
                                 >
                                     <Image
                                         src={image.url}
                                         alt={`Historical image ${index}`}
                                         objectFit="cover"
                                         w="100%"
-                                        h="200px"
+                                        h="350px"
                                     />
                                     <Box
                                         position="absolute"
@@ -168,11 +178,11 @@ function App() {
                                         left="0"
                                         right="0"
                                         bg="rgba(0, 0, 0, 0.6)"
-                                        p={2}
+                                        p={3}
                                         minH="fit-content"
                                     >
                                         <Text
-                                            fontSize="sm"
+                                            fontSize="md"
                                             color="white"
                                             noOfLines={2}
                                             textAlign="center"
@@ -182,10 +192,10 @@ function App() {
                                     </Box>
                                 </Box>
                             ))}
-                        </HStack>
+                        </VStack>
                     </Box>
                 )}
-            </VStack>
+            </HStack>
         </Container>
     );
 }
