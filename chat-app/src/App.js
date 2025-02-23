@@ -107,13 +107,22 @@ function App() {
                                         left="0"
                                         right="0"
                                         bg="rgba(0, 0, 0, 0.6)"
-                                        p={8}
-                                        minH="fit-content"
+                                        height="80px"
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="center"
                                     >
                                         <Text
                                             fontSize="3xl"
                                             color="white"
                                             textAlign="center"
+                                            sx={{
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: '1',
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden'
+                                            }}
+                                            w="90%"
                                         >
                                             {lastPrompt}
                                         </Text>
@@ -123,13 +132,34 @@ function App() {
                         </VStack>
                     ) : (
                         <Box p={4} textAlign="center">
-                            <Spinner
-                                thickness='4px'
-                                speed='0.65s'
-                                emptyColor='gray.200'
-                                color='blue.500'
-                                size='xl'
-                            />
+                            <VStack spacing={12}>
+                                <Spinner
+                                    thickness='4px'
+                                    speed='0.65s'
+                                    emptyColor='gray.200'
+                                    color='blue.500'
+                                    size='xl'
+                                />
+                                <VStack spacing={6}>
+                                    <Text fontSize="4xl" fontWeight="bold" color="gray.700">
+                                        Start a conversation! 🎨
+                                    </Text>
+                                    <VStack spacing={4}>
+                                        <Text fontSize="2xl" color="gray.600" maxW="800px" lineHeight="1.8">
+                                            I will turn your story into pixels ✨
+                                        </Text>
+                                        <Text fontSize="2xl" color="gray.600" maxW="800px" lineHeight="1.8">
+                                            All your visual memories will be saved right here 🖼️
+                                        </Text>
+                                        <Text fontSize="2xl" color="gray.600" maxW="800px" lineHeight="1.8">
+                                            Wondering what sparked an image? 🤔
+                                        </Text>
+                                        <Text fontSize="2xl" color="gray.600" maxW="800px" lineHeight="1.8">
+                                            Each caption shows the moment that inspired it 🔮
+                                        </Text>
+                                    </VStack>
+                                </VStack>
+                            </VStack>
                         </Box>
                     )}
                 </Box>
@@ -178,14 +208,22 @@ function App() {
                                         left="0"
                                         right="0"
                                         bg="rgba(0, 0, 0, 0.6)"
-                                        p={3}
-                                        minH="fit-content"
+                                        height="40px"
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="center"
                                     >
                                         <Text
                                             fontSize="md"
                                             color="white"
-                                            noOfLines={2}
                                             textAlign="center"
+                                            sx={{
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: '1',
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden'
+                                            }}
+                                            w="90%"
                                         >
                                             {image.prompt}
                                         </Text>

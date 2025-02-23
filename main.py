@@ -75,8 +75,8 @@ def should_generate_image(transcript):
 
     nouns = _extract_pos(transcript)
     print("NOUNS: ", nouns)
-    # If there are more than half of the words in the transcript that are nouns, generate an image
-    return len(nouns) > 0
+    # If there are at least two word in the transcript that are nouns, generate an image
+    return len(nouns) > 1
 
 
 # --- Dummy function to simulate FAL AI image generation ---
