@@ -81,15 +81,6 @@ def should_generate_image(transcript):
 
 # --- Dummy function to simulate FAL AI image generation ---
 def generate_image_fal(prompt):
-    # In your production code, replace this with:
-    # return {
-    #     "images": [
-    #         {
-    #             "url": "https://v3.fal.media/files/zebra/3fVrwhS6WKCiqqX2WmxHh.png",
-    #             "text": prompt,
-    #         }
-    #     ]
-    # }
     prompt = (
         "Make a realistic picture, provide as much real-world element as possible. "
         + prompt
@@ -156,20 +147,6 @@ conversation = Conversation(
     callback_user_transcript=handle_user_transcript,
     callback_agent_response=handle_agent_response,
 )
-
-
-# Add this after your other socket event handlers
-# @socketio.on("connect")
-# def handle_connect():
-#     print("[WebSocket] Client connected")
-#     # Send a test image immediately on connection
-#     test_image = {
-#         "type": "image",
-#         "text": "Test connection image",
-#         "image_url": "https://picsum.photos/800/800",
-#     }
-#     print("[WebSocket] Sending test image on connection")
-#     socketio.emit("image", test_image)
 
 
 # Modify the main block to properly handle both the conversation and web server
