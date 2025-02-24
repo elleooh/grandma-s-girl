@@ -90,9 +90,13 @@ def generate_image_fal(prompt):
     #         }
     #     ]
     # }
+    prompt = (
+        "Make a realistic picture, provide as much real-world element as possible. "
+        + prompt
+    )
     result = fal_client.subscribe(
         "fal-ai/flux-pro/v1.1-ultra-finetuned",
-        arguments={"prompt": prompt, "finetune_id": "", "finetune_strength": 0.5},
+        arguments={"prompt": prompt, "finetune_id": "", "finetune_strength": 0.7},
         with_logs=True,
         on_queue_update=on_queue_update,
     )
