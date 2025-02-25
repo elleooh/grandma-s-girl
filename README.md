@@ -6,7 +6,7 @@ Grandma's Girl is an AI companion that helps Alzheimer's patients retain memorie
 
 
 ## What It Does
-Grandma's Girl is an AI companion that helps Alzheimer's patients retain memories through conversation and visual aids. Inspired by caring for my grandma (90 years young!), it engages through speech and real-time image generation, creating a bridge between past memories and present moments.
+Grandma's Girl is an AI companion that helps Alzheimer's patients retain memories through conversation and visual aids. Inspired by caring for my grandma, it engages through speech and real-time image generation, creating a bridge between past memories and present moments.
 
 ## Key Features
 - **Real-time voice conversations** with an AI agent that speaks in a cloned voice of a familiar person
